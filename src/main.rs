@@ -71,13 +71,11 @@ async fn main() {
                                 .unwrap();
                                 for page in pages_json {
                                     let client = reqwest::Client::new();
-                                    println!("{}", page.extension);
                                     let mut page_stream = client
                                         .get(format!(
-                                            "https://img-cdn.trendymanga.com/{}/{}.{}",
+                                            "http://img-cdn.trendymanga.com/{}/{}.{}",
                                             chapter_id, page.id, page.extension,
                                         ))
-                                        .timeout(Duration::from_secs(1200))
                                         .send()
                                         .await
                                         .unwrap()
