@@ -1,23 +1,20 @@
+use futures::StreamExt;
 use inquire::Select;
 use serde::Deserialize;
 use std::fs;
 use std::io;
+use std::time::Duration;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 
 mod search;
 
 #[derive(Deserialize, Debug)]
-struct JsonRemangaChapter {
-    content: JsonRemangaChapterContent,
-}
-
-#[derive(Deserialize, Debug)]
-struct JsonRemangaChapterContent {
-    pages: Vec<Vec<JsonRemangaPage>>,
-}
-
-#[derive(Deserialize, Debug)]
-struct JsonRemangaPage {
-    link: String,
+struct TrendyMangaPage {
+    id: String,
+    #[serde(rename(deserialize = "chapterId"))]
+    chapter_id: String,
+    extension: String,
 }
 
 #[tokio::main]
@@ -31,7 +28,7 @@ async fn main() {
     println!("Type manghwa title:");
     let mut title_input: String = String::new();
     io::stdin().read_line(&mut title_input).unwrap();
-    let manghwas = search::search_manghwa(title_input).await;
+    let manghwas = search::search_manghwa(title_input.trim().to_string()).await;
     if let Ok(result) = manghwas {
         let manghwa_titles = result.iter().map(|m| &m.title).collect();
         let answer = Select::new("Select manghwa:", manghwa_titles).prompt();
@@ -39,36 +36,60 @@ async fn main() {
             println!("Reading manghwa {user_input}!");
             for manghwa in &result {
                 if manghwa.title == *user_input {
-                    println!("{manghwa:#?}");
-                    let short_name = &manghwa.short_name;
+                    let manghwa_shortname = &manghwa.short_name;
                     let chapter_answer = Select::new(
                         "Select chapter",
                         manghwa.chapters.iter().map(|c| &c.number).collect(),
                     )
                     .prompt();
-                    fs::create_dir(format!("{TMP_DIR}/{short_name}"))
-                        .expect("This manghwa's directory already exists.");
+
+                    let created_manghwa_tmp =
+                        fs::create_dir(format!("{TMP_DIR}/{manghwa_shortname}"));
+                    if created_manghwa_tmp.is_err() {
+                        println!("This manghwa's tmp dir already exists.");
+                    }
+
                     if let Ok(selected_chapter) = chapter_answer {
                         for chapter in &manghwa.chapters {
                             if chapter.number == *selected_chapter {
-                                let chapter_id = chapter.id;
+                                let chapter_id = &chapter.id;
+
+                                let chapter_tmp_path =
+                                    format!("{TMP_DIR}/{manghwa_shortname}/{chapter_id}");
+                                let created_chapter_tmp = fs::create_dir(&chapter_tmp_path);
+                                if created_chapter_tmp.is_err() {
+                                    println!("This chapter's directory already exists.");
+                                }
+
                                 let pages_json = reqwest::get(format!(
-                                    "https://api.remanga.org/api/titles/chapters/{chapter_id}"
+                                    "https://api.trendymanga.com/titles/{manghwa_shortname}/chapters/{chapter_id}/pages"
                                 ))
                                 .await
                                 .unwrap()
-                                .json::<JsonRemangaChapter>()
+                                .json::<Vec<TrendyMangaPage>>()
                                 .await
                                 .unwrap();
-                                for pages in pages_json.content.pages {
-                                    for page in pages {
-                                        let page_content = reqwest::get(page.link)
-                                            .await
-                                            .unwrap()
-                                            .text()
-                                            .await
-                                            .unwrap();
-                                        println!("{page_content}");
+                                for page in pages_json {
+                                    let client = reqwest::Client::new();
+                                    println!("{}", page.extension);
+                                    let mut page_stream = client
+                                        .get(format!(
+                                            "https://img-cdn.trendymanga.com/{}/{}.{}",
+                                            chapter_id, page.id, page.extension,
+                                        ))
+                                        .timeout(Duration::from_secs(1200))
+                                        .send()
+                                        .await
+                                        .unwrap()
+                                        .bytes_stream();
+                                    let mut page_file = File::create(format!(
+                                        "{}/{}.{}",
+                                        chapter_tmp_path, page.id, page.extension,
+                                    ))
+                                    .await
+                                    .unwrap();
+                                    while let Some(item) = page_stream.next().await {
+                                        page_file.write_all(&item.unwrap()).await.unwrap();
                                     }
                                 }
                             }
@@ -82,4 +103,8 @@ async fn main() {
 
 const fn get_tmp_dir_path() -> &'static str {
     "tmp"
+}
+
+fn get_title_chapter_tmp_dir_path(title: String, chapter_id: String) -> String {
+    format!("{}/{}/{}", get_tmp_dir_path(), title, chapter_id)
 }
