@@ -2,6 +2,7 @@
 
 use std::{error::Error, fs, future::Future, io};
 
+use indicatif::{ProgressBar, ProgressStyle};
 use inquire::Select;
 use serde::Deserialize;
 use tokio::{fs::File, io::AsyncWriteExt};
@@ -52,7 +53,6 @@ impl Application for Macli {
                             manghwa.chapters.iter().map(|c| &c.number).collect(),
                         )
                         .prompt();
-
                         let created_manghwa_tmp =
                             fs::create_dir(format!("{TMP_DIR}/{manghwa_shortname}"));
                         if created_manghwa_tmp.is_err() {
@@ -79,7 +79,13 @@ impl Application for Macli {
                                 .json::<Vec<TrendyMangaPage>>()
                                 .await
                                 .unwrap();
-                                    for page in pages_json {
+                                    let style =
+                                        ProgressStyle::with_template("{bar:50.green} {pos}/{len}")
+                                            .unwrap()
+                                            .progress_chars("##-");
+                                    let bar = ProgressBar::new(pages_json.len() as u64);
+                                    bar.set_style(style);
+                                    for (idx, page) in pages_json.iter().enumerate() {
                                         let page_img = reqwest::get(format!(
                                             "http://img-cdn.trendymanga.com/{}/{}.{}",
                                             chapter_id, page.id, page.extension,
@@ -91,12 +97,16 @@ impl Application for Macli {
                                         .unwrap();
                                         let mut page_file = File::create(format!(
                                             "{}/{}.{}",
-                                            chapter_tmp_path, page.id, page.extension,
+                                            chapter_tmp_path,
+                                            idx + 1,
+                                            page.extension,
                                         ))
                                         .await
                                         .unwrap();
                                         page_file.write_all(&page_img).await.unwrap();
+                                        bar.inc(1);
                                     }
+                                    bar.finish_with_message("Done.");
                                 }
                             }
                         }
