@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 
-use macli::manghwa;
 use serde::Deserialize;
 use std::error::Error;
+
+use crate::manghwa;
 
 #[derive(Deserialize, Debug)]
 struct TrendyMangaSearchResponse {
