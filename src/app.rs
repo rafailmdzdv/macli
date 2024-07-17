@@ -1,14 +1,10 @@
 #![allow(dead_code)]
 
-use std::error::Error;
-use std::fs;
-use std::future::Future;
-use std::io;
+use std::{error::Error, fs, future::Future, io};
 
 use inquire::Select;
 use serde::Deserialize;
-use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
+use tokio::{fs::File, io::AsyncWriteExt};
 
 use crate::search;
 
