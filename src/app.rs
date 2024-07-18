@@ -148,13 +148,17 @@ fn build_ui(app: &gtk4::Application, title_name: &String, chapter_id: &String) {
     paths.sort_by(|a, b| {
         let a_str = a.string();
         let b_str = b.string();
-        let a_name = a_str.split('/').collect::<Vec<&str>>()[3];
-        let b_name = b_str.split('/').collect::<Vec<&str>>()[3];
-        a_name.split('.').collect::<Vec<&str>>()[0]
+        let splitted_a = a_str.split('/').collect::<Vec<&str>>();
+        let splitted_b = b_str.split('/').collect::<Vec<&str>>();
+        splitted_a[splitted_a.len() - 1]
+            .split('.')
+            .collect::<Vec<&str>>()[0]
             .parse::<i16>()
             .unwrap()
             .cmp(
-                &b_name.split('.').collect::<Vec<&str>>()[0]
+                &splitted_b[splitted_b.len() - 1]
+                    .split('.')
+                    .collect::<Vec<&str>>()[0]
                     .parse::<i16>()
                     .unwrap(),
             )
