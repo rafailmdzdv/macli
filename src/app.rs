@@ -156,7 +156,6 @@ fn build_ui(app: &gtk4::Application, title_name: &String, chapter_id: &String) {
     let factory = gtk4::SignalListItemFactory::new();
     list_store.extend_from_slice(&paths);
     factory.connect_setup(|_, list_item| {
-        let image = gtk4::Image::new();
         let picture = gtk4::Picture::new();
         list_item
             .downcast_ref::<gtk4::ListItem>()
