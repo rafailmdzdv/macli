@@ -34,10 +34,10 @@ impl Macli {
 impl Application for Macli {
     async fn run_cmd(&self) -> Result<(), Box<dyn Error>> {
         let app = gtk4::Application::builder().build();
-        const TMP_DIR: &str = get_tmp_dir_path();
-        let created_tmp = fs::create_dir(TMP_DIR);
+        let tmp_dir: String = get_tmp_dir_path();
+        let created_tmp = fs::create_dir(&tmp_dir);
         if created_tmp.is_err() {
-            println!("{TMP_DIR}/ already exists.");
+            println!("{tmp_dir}/ already exists.");
         }
         println!("Type manghwa title:");
         let mut title_input: String = String::new();
@@ -57,7 +57,7 @@ impl Application for Macli {
                         )
                         .prompt();
                         let created_manghwa_tmp =
-                            fs::create_dir(format!("{TMP_DIR}/{}", &manghwa_shortname));
+                            fs::create_dir(format!("{tmp_dir}/{}", &manghwa_shortname));
                         if created_manghwa_tmp.is_err() {
                             println!("This manghwa's tmp dir already exists.");
                         }
@@ -68,7 +68,7 @@ impl Application for Macli {
                                     let chapter_id = chapter.id.clone();
 
                                     let chapter_tmp_path =
-                                        format!("{TMP_DIR}/{}/{}", &manghwa_shortname, &chapter_id);
+                                        format!("{tmp_dir}/{}/{}", &manghwa_shortname, &chapter_id);
                                     let created_chapter_tmp = fs::create_dir(&chapter_tmp_path);
                                     if created_chapter_tmp.is_err() {
                                         println!("This chapter's directory already exists.");
@@ -190,6 +190,6 @@ fn build_ui(app: &gtk4::Application, title_name: &String, chapter_id: &String) {
     window.present();
 }
 
-const fn get_tmp_dir_path() -> &'static str {
-    "tmp"
+fn get_tmp_dir_path() -> String {
+    format!("{}/.macli", home::home_dir().unwrap().to_str().unwrap())
 }
