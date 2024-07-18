@@ -1,5 +1,5 @@
-# macli.
+# macli
 
-## (Ma)nghwa (CLI) reader.
+## (Ma)nghwa (CLI) reader
 
-### Desc. will be available soon.
+![Example](./assets/example.gif)
