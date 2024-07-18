@@ -134,7 +134,13 @@ fn build_ui(app: &gtk4::Application, title_name: &String, chapter_id: &String) {
         .default_height(960)
         .title("Macli")
         .build();
-    let pages = fs::read_dir(format!("tmp/{title_name}/{chapter_id}")).unwrap();
+    let pages = fs::read_dir(format!(
+        "{}/{}/{}",
+        get_tmp_dir_path(),
+        title_name,
+        chapter_id
+    ))
+    .unwrap();
     let list_store = gio::ListStore::new::<gtk4::StringObject>();
     let mut paths: Vec<gtk4::StringObject> = pages
         .map(|page| gtk4::StringObject::new(page.unwrap().path().to_str().unwrap()))
