@@ -1,0 +1,22 @@
+name: macli CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install sys. deps
+      run: apt update -y && apt install -y libgtk-4-dev build-essential
+
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build
+    - name: Run tests
+      run: cargo test
