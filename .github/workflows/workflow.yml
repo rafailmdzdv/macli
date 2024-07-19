@@ -13,9 +13,11 @@ jobs:
 
     steps:
     - name: Install sys. deps
-      run: apt update -y && apt install -y libgtk-4-dev build-essential
+      run: sudo apt update -y && sudo apt install -y libgtk-4-dev build-essential
 
     - uses: actions/checkout@v4
+    - name: Change gtk4 version (ubuntu old package issue)
+      run: sed -i 's/\(gtk4.\+"\)v4_14/\1v4_6/' Cargo.toml
     - name: Build
       run: cargo build
     - name: Run tests
