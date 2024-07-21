@@ -3,6 +3,7 @@
 use serde::Deserialize;
 use std::error::Error;
 
+use crate::config::MacliConf;
 use crate::manghwa;
 
 #[derive(Deserialize, Debug)]
@@ -38,7 +39,10 @@ impl<'de> Deserialize<'de> for TrendyMangaChapter {
     }
 }
 
-pub async fn search_manghwa(title: String) -> Result<Vec<manghwa::Manghwa>, Box<dyn Error>> {
+pub async fn search_manghwa(
+    title: String,
+    config: &MacliConf,
+) -> Result<Vec<manghwa::Manghwa>, Box<dyn Error>> {
     let client = reqwest::Client::new();
     let json_body = format!(
         r#"{{
@@ -53,7 +57,7 @@ pub async fn search_manghwa(title: String) -> Result<Vec<manghwa::Manghwa>, Box<
     }}"#
     );
     let json_response = client
-        .post("https://api.trendymanga.com/titles/search")
+        .post(format!("{}/titles/search", config.manghwa_api))
         .header("Content-Type", "application/json")
         .body(json_body)
         .send()
@@ -67,15 +71,16 @@ pub async fn search_manghwa(title: String) -> Result<Vec<manghwa::Manghwa>, Box<
             id: manghwa.id,
             title: manghwa.russian_name,
             short_name: manghwa.url_name.clone(),
-            chapters: acquire_chapters(manghwa.url_name.clone()).await,
+            chapters: acquire_chapters(manghwa.url_name.clone(), config).await,
         });
     }
     Ok(manghwas)
 }
 
-async fn acquire_chapters(manghwa_short_name: String) -> Vec<manghwa::Chapter> {
+async fn acquire_chapters(manghwa_short_name: String, config: &MacliConf) -> Vec<manghwa::Chapter> {
     let json_response = reqwest::get(format!(
-        "https://api.trendymanga.com/titles/{manghwa_short_name}/chapters",
+        "{}/titles/{}/chapters",
+        config.manghwa_api, manghwa_short_name,
     ))
     .await
     .unwrap()

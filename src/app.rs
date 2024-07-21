@@ -50,7 +50,7 @@ impl Application for Macli {
         io::stdout().flush().unwrap();
         let mut title_input: String = String::new();
         io::stdin().read_line(&mut title_input).unwrap();
-        let manghwas = search::search_manghwa(title_input.trim().to_string()).await;
+        let manghwas = search::search_manghwa(title_input.trim().to_string(), &config).await;
         if let Ok(result) = manghwas {
             let manghwa_titles = result.iter().map(|m| &m.title).collect();
             let answer = Select::new("Select manghwa:", manghwa_titles).prompt();
@@ -86,8 +86,8 @@ impl Application for Macli {
                                     }
 
                                     let pages_json = reqwest::get(format!(
-                                        "https://api.trendymanga.com/titles/{}/chapters/{}/pages",
-                                        &manghwa_shortname, &chapter_id,
+                                        "{}/titles/{}/chapters/{}/pages",
+                                        config.manghwa_api, manghwa_shortname, chapter_id,
                                     ))
                                     .await
                                     .unwrap()
@@ -102,8 +102,8 @@ impl Application for Macli {
                                     bar.set_style(style);
                                     for (idx, page) in pages_json.iter().enumerate() {
                                         let page_img = reqwest::get(format!(
-                                            "http://img-cdn.trendymanga.com/{}/{}.{}",
-                                            chapter_id, page.id, page.extension,
+                                            "{}/{}/{}.{}",
+                                            config.manghwa_cdn, chapter_id, page.id, page.extension,
                                         ))
                                         .await
                                         .unwrap()
