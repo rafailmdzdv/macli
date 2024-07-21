@@ -1,6 +1,11 @@
 #![allow(dead_code)]
 
-use std::{error::Error, fs, future::Future, io};
+use std::{
+    error::Error,
+    fs,
+    future::Future,
+    io::{self, Write},
+};
 
 use gtk4::prelude::*;
 use image::io::Reader;
@@ -40,7 +45,9 @@ impl Application for Macli {
         if created_tmp.is_err() {
             println!("{}/ already exists.", config.tmp_path);
         }
-        println!("Type manghwa title:");
+
+        print!("Type manghwa title: ");
+        io::stdout().flush().unwrap();
         let mut title_input: String = String::new();
         io::stdin().read_line(&mut title_input).unwrap();
         let manghwas = search::search_manghwa(title_input.trim().to_string()).await;
