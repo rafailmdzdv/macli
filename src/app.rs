@@ -123,7 +123,8 @@ impl Application for Macli {
                                     }
                                     bar.finish_with_message("Done.");
                                     app.connect_activate(move |appl| {
-                                        build_ui(appl, &manghwa_shortname, &chapter_id);
+                                        let config = config::MacliConf::default();
+                                        build_ui(appl, &manghwa_shortname, &chapter_id, &config);
                                     });
                                     app.run();
                                     break;
@@ -138,20 +139,19 @@ impl Application for Macli {
     }
 }
 
-fn build_ui(app: &gtk4::Application, title_name: &String, chapter_id: &String) {
+fn build_ui(
+    app: &gtk4::Application,
+    title_name: &String,
+    chapter_id: &String,
+    config: &config::MacliConf,
+) {
     let window = gtk4::ApplicationWindow::builder()
         .application(app)
         .default_width(540)
         .default_height(960)
         .title("Macli")
         .build();
-    let pages = fs::read_dir(format!(
-        "{}/{}/{}",
-        get_tmp_dir_path(),
-        title_name,
-        chapter_id
-    ))
-    .unwrap();
+    let pages = fs::read_dir(format!("{}/{}/{}", config.tmp_path, title_name, chapter_id)).unwrap();
     let list_store = gio::ListStore::new::<gtk4::StringObject>();
     let mut paths: Vec<gtk4::StringObject> = pages
         .map(|page| gtk4::StringObject::new(page.unwrap().path().to_str().unwrap()))
