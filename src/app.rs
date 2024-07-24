@@ -83,6 +83,17 @@ impl Application for Macli {
                                     let created_chapter_tmp = fs::create_dir(&chapter_tmp_path);
                                     if created_chapter_tmp.is_err() {
                                         println!("This chapter's directory already exists.");
+                                        app.connect_activate(move |appl| {
+                                            let config = config::MacliConf::default();
+                                            build_ui(
+                                                appl,
+                                                &manghwa_shortname,
+                                                &chapter_id,
+                                                &config,
+                                            );
+                                        });
+                                        app.run();
+                                        break;
                                     }
 
                                     let pages_json = reqwest::get(format!(
