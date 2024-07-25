@@ -4,11 +4,10 @@
 
 ![Example](./assets/example.gif)
 
-
-
 ## Install
 
 ### Dependencies
+
 - gtk4
 - build-essential (base-devel)
 
