@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct MacliConf {
     pub tmp_path: String,
     pub manghwa_api: String,
