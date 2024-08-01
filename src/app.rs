@@ -34,6 +34,35 @@ impl Macli {
     pub fn new() -> Self {
         Macli {}
     }
+
+    fn create_manghwa_tmp(
+        &self,
+        config: &config::MacliConf,
+        manghwa_shortname: &String,
+    ) {
+        let created_manghwa_tmp =
+            fs::create_dir(format!("{}/{}", config.tmp_path, manghwa_shortname));
+        if created_manghwa_tmp.is_err() {
+            println!("This manghwa's tmp dir already exists.");
+        }
+    }
+
+    fn create_chapter_tmp(
+        &self,
+        config: &config::MacliConf,
+        manghwa_shortname: &String,
+        chapter_id: &String,
+    ) -> Result<String, Box<dyn Error>> {
+        let chapter_tmp_path = format!(
+            "{}/{}/{}",
+            config.tmp_path, manghwa_shortname, chapter_id
+        );
+        let created_chapter_tmp = fs::create_dir(&chapter_tmp_path);
+        if let Err(_) = created_chapter_tmp {
+            panic!("This directory already exists.")
+        }
+        Ok(chapter_tmp_path)
+    }
 }
 impl Application for Macli {
     async fn run_cmd(&self) -> Result<(), Box<dyn Error>> {
@@ -63,24 +92,20 @@ impl Application for Macli {
                             manghwa.chapters.iter().map(|c| &c.number).collect(),
                         )
                         .prompt();
-
-                        let created_manghwa_tmp =
-                            fs::create_dir(format!("{}/{}", config.tmp_path, manghwa_shortname));
-                        if created_manghwa_tmp.is_err() {
-                            println!("This manghwa's tmp dir already exists.");
-                        }
+                        self.create_manghwa_tmp(&config, &manghwa_shortname);
 
                         if let Ok(selected_chapter) = chapter_answer {
                             for chapter in &manghwa.chapters {
                                 if chapter.number == *selected_chapter {
                                     let chapter_id = chapter.id.clone();
 
-                                    let chapter_tmp_path = format!(
-                                        "{}/{}/{}",
-                                        config.tmp_path, manghwa_shortname, chapter_id,
+                                    let created_chapter_tmp = self.create_chapter_tmp(
+                                        &config, &manghwa_shortname, &chapter_id,
                                     );
-                                    let created_chapter_tmp = fs::create_dir(&chapter_tmp_path);
-                                    if created_chapter_tmp.is_err() {
+                                    let chapter_tmp_path: String;
+                                    if let Ok(path) = created_chapter_tmp {
+                                        chapter_tmp_path = path;
+                                    } else {
                                         println!("This chapter's directory already exists.");
                                         let macli_clone = macli_ui.clone();
                                         macli_ui.app.connect_activate(move |_| {
@@ -143,3 +168,5 @@ impl Application for Macli {
         Ok(())
     }
 }
+
+
